@@ -9,9 +9,12 @@ import urllib.parse
 import os
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
+import sys
+
 # Setup logging
+# Use stream logging (console) instead of file logging for better compatibility with Streamlit Cloud
 logging.basicConfig(
-    filename=f"logs/linkedin_scraper_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log",
+    handlers=[logging.StreamHandler(sys.stdout)],
     level=logging.INFO,
     format="%(asctime)s - %(levelname)s - %(message)s"
 )
