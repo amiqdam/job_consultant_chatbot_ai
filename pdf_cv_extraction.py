@@ -8,6 +8,19 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+import streamlit as st
+
+def get_api_key():
+    # Try getting from environment variable (local .env)
+    key = os.getenv("OPENAI_API_KEY")
+    if not key:
+        # Try getting from streamlit secrets (cloud)
+        try:
+            key = st.secrets["OPENAI_API_KEY"]
+        except:
+            pass
+    return key
+
 def pdf_summary(PDF_FILE):
   # extract pdf
   reader = PdfReader(PDF_FILE)
@@ -33,9 +46,15 @@ def pdf_summary(PDF_FILE):
   experience: (list of job experience, summarize into one sentence for each job position)
   skills: (list of technical skills)
   """)
+  
+  api_key = get_api_key()
+  if not api_key:
+      raise ValueError("OPENAI_API_KEY not found in environment variables or Streamlit secrets.")
+
   llm = ChatOpenAI(
     model_name = "gpt-4o-mini",
-    temperature = 0
+    temperature = 0,
+    api_key=api_key
   )
 
   map_chain = map_prompt_template | llm

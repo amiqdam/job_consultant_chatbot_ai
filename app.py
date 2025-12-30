@@ -101,7 +101,19 @@ if st.button("Analyze CV", type="primary"):
         status_text.text("🤖 Generating gap analysis & roadmap...")
         progress_bar.progress(75)
         
-        llm = ChatOpenAI(model_name="gpt-4o", temperature=0.7)
+        # Get API Key safely
+        openai_api_key = os.getenv("OPENAI_API_KEY")
+        if not openai_api_key:
+            try:
+                openai_api_key = st.secrets["OPENAI_API_KEY"]
+            except:
+                pass
+        
+        if not openai_api_key:
+             st.error("Missing OpenAI API Key in environment or secrets.")
+             st.stop()
+
+        llm = ChatOpenAI(model_name="gpt-4o", temperature=0.7, api_key=openai_api_key)
         
         prompt = PromptTemplate.from_template("""
         You are a Career Consultant Supervisor.
@@ -180,7 +192,13 @@ if st.session_state.cv_analyzed:
         # Generate AI response
         with st.chat_message("assistant"):
             with st.spinner("Thinking..."):
-                llm = ChatOpenAI(model_name="gpt-4o", temperature=0.1)
+                # Get Key again (or accessing from session state if we stored it, but simply re-fetching is fine)
+                api_key = os.getenv("OPENAI_API_KEY")
+                if not api_key:
+                    try: api_key = st.secrets["OPENAI_API_KEY"]
+                    except: pass
+                
+                llm = ChatOpenAI(model_name="gpt-4o", temperature=0.1, api_key=api_key)
                 
                 # Create context-aware prompt
                 chat_prompt = PromptTemplate.from_template("""

@@ -12,10 +12,23 @@ from qdrant_client.http.models import Distance, VectorParams #for distance metho
 
 # Load environment variables
 from dotenv import load_dotenv
+import streamlit as st
 load_dotenv()
 
-qdrant_api_key = os.getenv("QDRANT_API_KEY")
-qdrant_url = os.getenv("QDRANT_URL")
+def get_secret(key_name):
+    # Try environment variable first
+    val = os.getenv(key_name)
+    if not val:
+        # Try streamlit secrets
+        try:
+            val = st.secrets[key_name]
+        except:
+            pass
+    return val
+
+qdrant_api_key = get_secret("QDRANT_API_KEY")
+qdrant_url = get_secret("QDRANT_URL")
+openai_api_key = get_secret("OPENAI_API_KEY")
 
 # Initialize Qdrant Client
 qdrant_client = QdrantClient(
@@ -51,7 +64,7 @@ def create_document(job):
 
     qdrant = QdrantVectorStore.from_documents(
         document,
-        OpenAIEmbeddings(model="text-embedding-3-small"),
+        OpenAIEmbeddings(model="text-embedding-3-small", api_key=openai_api_key),
         url=qdrant_url,
         prefer_grpc=True,
         api_key=qdrant_api_key,
@@ -67,7 +80,7 @@ def retrieve_qdrant(query_text, k=5):
         return []
 
     qdrant = QdrantVectorStore.from_existing_collection(
-        embedding=OpenAIEmbeddings(model="text-embedding-3-small"),
+        embedding=OpenAIEmbeddings(model="text-embedding-3-small", api_key=openai_api_key),
         collection_name="linkedin_jobs",
         url=qdrant_url,
         api_key=qdrant_api_key
