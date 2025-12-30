@@ -1,5 +1,9 @@
 import streamlit as st
 import time
+from dotenv import load_dotenv
+
+load_dotenv()
+
 from pdf_cv_extraction import pdf_summary
 from linkedin_scrapper import scrape_linkedin_fast
 from vector_db import ingest_jobs_from_file, retrieve_qdrant
