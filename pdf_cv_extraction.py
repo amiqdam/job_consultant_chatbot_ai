@@ -10,7 +10,6 @@ load_dotenv()
 
 def pdf_summary(PDF_FILE):
   # extract pdf
-
   reader = PdfReader(PDF_FILE)
 
   text = str() 

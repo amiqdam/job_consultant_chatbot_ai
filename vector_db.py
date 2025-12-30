@@ -23,30 +23,41 @@ qdrant_client = QdrantClient(
     api_key=qdrant_api_key
 )
 
-job = pd.read_json("linkedin_jobs.json")
-embeddings = OpenAIEmbeddings(model="text-embedding-3-small")
-
 # Connect RAG from linkedin_jobs.json to summary
-document = []
 def create_document(job):
+    document = []
     for i in range(job.shape[0]):
-        job_id = job["id"][i]
+        job_id = str(job["id"][i])  # Ensure ID is a string to prevent JSON serialization errors
         job_title = job["title"][i]
         job_company = job["company"][i]
         job_description = job["description"][i]
         job_link = job["link"][i]
-        document.append(Document(page_content=f"Title: {job_title}\nDescription: {job_description}\n", metadata={"id": job_id, "title": job_title, "company": job_company, "link": job_link}))
+        job_industry = job.get("industry", [None]*len(job))[i] # Handle potential missing industry
+        
+        content = f"Title: {job_title}\nCompany: {job_company}\nDescription: {job_description}\n"
+        if job_industry and job_industry != "Unknown":
+            content += f"Industry: {job_industry}\n"
+            
+        document.append(Document(
+            page_content=content, 
+            metadata={
+                "id": job_id, 
+                "title": job_title, 
+                "company": job_company, 
+                "link": job_link,
+                "industry": job_industry
+            }
+        ))
 
     qdrant = QdrantVectorStore.from_documents(
         document,
-        embeddings,
+        OpenAIEmbeddings(model="text-embedding-3-small"),
         url=qdrant_url,
         prefer_grpc=True,
         api_key=qdrant_api_key,
         collection_name="linkedin_jobs",
     )
 
-# Retrieve the QDRANT to use for RAG
 def retrieve_qdrant(query_text, k=5):
     """
     Retrieve for RAG to recommend jobs that have similar description and skills required with uploaded CV or query.
@@ -56,7 +67,7 @@ def retrieve_qdrant(query_text, k=5):
         return []
 
     qdrant = QdrantVectorStore.from_existing_collection(
-        embedding=embeddings,
+        embedding=OpenAIEmbeddings(model="text-embedding-3-small"),
         collection_name="linkedin_jobs",
         url=qdrant_url,
         api_key=qdrant_api_key
@@ -69,16 +80,24 @@ def retrieve_qdrant(query_text, k=5):
 def ingest_jobs_from_file(file_path="linkedin_jobs.json"):
     """
     Ingest jobs from a JSON file into Qdrant.
+    Returns the number of jobs ingested.
     """
     if not os.path.exists(file_path):
         print(f"File {file_path} not found.")
         return 0
 
-    job_df = pd.read_json(file_path)
-    # Reuse create_document logic but ensure it runs
-    create_document(job_df)
-    print(f"Ingested {len(job_df)} jobs from {file_path}")
-    return len(job_df)
+    try:
+        job_df = pd.read_json(file_path)
+        if job_df.empty:
+            return 0
+            
+        # Reuse create_document logic
+        create_document(job_df)
+        print(f"Ingested {len(job_df)} jobs from {file_path}")
+        return len(job_df)
+    except Exception as e:
+        print(f"Error ingesting jobs: {e}")
+        return 0
 
 def aggregate_skills_from_json(file_path="linkedin_jobs.json", limit=100):
     """

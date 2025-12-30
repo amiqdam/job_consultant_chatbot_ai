@@ -147,6 +147,38 @@ def get_job_details(job_id):
             desc_box = soup.find("div", class_="show-more-less-html__markup")
             description = desc_box.get_text(separator="\n").strip() if desc_box else "No description"
             
+            # Extract industry from "Industries" criteria in the job details
+            industry = "Unknown"
+            try:
+                # Based on browser inspection, look for the criteria list
+                criteria_list = soup.find("ul", class_="description__job-criteria-list")
+                if criteria_list:
+                    # Iterate through items to find "Industries"
+                    for item in criteria_list.find_all("li", class_="description__job-criteria-item"):
+                        subheader = item.find("h3", class_="description__job-criteria-subheader")
+                        if subheader and "Industries" in subheader.get_text():
+                            # Extract the text from the span
+                            value_span = item.find("span", class_="description__job-criteria-text")
+                            if value_span:
+                                industry = value_span.get_text(strip=True)
+                            break
+                
+                # Fallback: Check for other common structures if the above fails
+                if industry == "Unknown":
+                    # Sometimes it's in a different card format
+                    company_info_section = soup.find("div", class_="top-card-layout__card")
+                    if company_info_section:
+                        dl_items = company_info_section.find_all("dl")
+                        for dl in dl_items:
+                            dt = dl.find("dt")
+                            dd = dl.find("dd")
+                            if dt and dd and "Industry" in dt.get_text():
+                                industry = dd.get_text(strip=True)
+                                break
+            except Exception as e:
+                logging.warning(f"Could not extract industry for {job_id}: {e}")
+                industry = "Unknown"
+            
             return {
                 "id": job_id,
                 "title": title,
@@ -154,7 +186,8 @@ def get_job_details(job_id):
                 "location": location,
                 "description": description,
                 "link": f"https://www.linkedin.com/jobs/view/{job_id}",
-                "scraped_at": datetime.now().isoformat()
+                "scraped_at": datetime.now().isoformat(),
+                "industry": industry
             }
             
         except Exception as e:
