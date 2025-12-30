@@ -6,11 +6,15 @@ from datetime import datetime
 import time
 import random
 import urllib.parse
+import os
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 # Setup logging
+if not os.path.exists("logs"):
+    os.makedirs("logs")
+
 logging.basicConfig(
-    filename=f"linkedin_scraper_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log",
+    filename=f"logs/linkedin_scraper_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log",
     level=logging.INFO,
     format="%(asctime)s - %(levelname)s - %(message)s"
 )
