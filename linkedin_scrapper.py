@@ -18,9 +18,6 @@ HEADERS = {
 }
 
 def get_job_ids(keyword, location, limit=50):
-    """
-    Fast scrape of Job IDs using the 'hidden' guest API.
-    """
     job_ids = []
     start = 0
     
