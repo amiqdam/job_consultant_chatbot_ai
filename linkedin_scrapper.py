@@ -11,15 +11,6 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 
 import sys
 
-# Setup logging
-# Use stream logging (console) instead of file logging for better compatibility with Streamlit Cloud
-logging.basicConfig(
-    handlers=[logging.StreamHandler(sys.stdout)],
-    level=logging.INFO,
-    format="%(asctime)s - %(levelname)s - %(message)s"
-)
-
-# Headers to mimic a browser
 HEADERS = {
     "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
     "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
